@@ -63,12 +63,16 @@ public class Vec2 {
 
   public void setToLength(float newL) {
     float magnitude = sqrt(x * x + y * y);
+    if (magnitude == 0)
+        return;
     x *= newL / magnitude;
     y *= newL / magnitude;
   }
 
   public void normalize() {
     float magnitude = sqrt(x * x + y * y);
+    if (magnitude == 0)
+        return;
     x /= magnitude;
     y /= magnitude;
   }

@@ -10,10 +10,10 @@ class Camera
 {
   Camera()
   {
-    position      = new PVector( 0, 0, 200 ); // initial position
-    theta         = 0.5; // rotation around Y axis. Starts with forward direction as ( 0, 0, -1 )
+    position      = new PVector( 0, 0, 0 ); // initial position
+    theta         = 9; // rotation around Y axis. Starts with forward direction as ( 0, 0, -1 )
     phi           = 0; // rotation around X axis. Starts with up direction as ( 0, 1, 0 )
-    moveSpeed     = 50;
+    moveSpeed     = 1;
     turnSpeed     = 1.57; // radians/sec
     //boostSpeed    = 10;  // extra speed boost for when you press shift
     //mouseDir      = new PVector( 0, 0, -1 ); // direction of mouse ray

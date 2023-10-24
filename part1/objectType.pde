@@ -1,45 +1,23 @@
 class Circle {
-    float x, y, r;  
-    float red, green, blue;
+    public Vec3 pos;
+    public Vec3 vel;
+    public float radius;
     
-    Circle(float x, float y, float r) {
-        this.x = x;
-        this.y = y;
-        this.r = r;
+    public Circle (Vec3 pos, Vec3 vel, float radius) {
+        this.pos = pos;
+        this.vel = vel;
+        this.radius = radius;
     }
     
-    Circle(float x, float y, float r, float red, float green, float blue) {
-        this.x = x;
-        this.y = y;
-        this.r = r;
-        this.red = red;
-        this.green = green;
-        this.blue = blue;
-    }  
-}
-
-class Ellipse {
-    float id;
-    float x, y, w, h;  
-    float red, green, blue;
-    
-    Ellipse(float id, float x, float y, float w, float h) {
-        this.id = id;
-        this.x = x;
-        this.y = y;
-        this.w = w;
-        this.h = h;
+    public void updatePhysics(float dt) {
+        pos.add(vel.times(dt));
     }
     
-    Ellipse(float id, float x, float y, float w, float h, float red, float green, float blue) {
-        this.id = id;
-        this.x = x;
-        this.y = y;
-        this.w = w;
-        this.h = h;
-        this.red = red;
-        this.green = green;
-        this.blue = blue;
+    public void draw() {
+        push();
+        fill(200, 100, 128);
+        translate(pos.x, pos.y, pos.z);
+        sphere(radius);
+        pop();
     }
-    
 }

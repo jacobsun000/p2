@@ -1,12 +1,22 @@
+import java.util.function.Function;
+
+
 public class Cloth {
     public Node[][] nodes;
+    public int rows, cols;
     public float linkLength;
-    public Function<Vec2, Vec2> posFunc;
+    public Function<Vec2, Vec3> posFunc;
+    public PImage texture;
+    private Vec3[][] vn; // temp array to hold new velocities for cloth
     
-    public Cloth(int numRows, int numCols, float linkLength, Function<Vec2, Vec2> posFunc) {
+    public Cloth(int numRows, int numCols, float linkLength, 
+            Function<Vec2, Vec3> posFunc, PImage texture) {
+        this.rows = numRows;
+        this.cols = numCols;
         this.nodes = new Node[numRows][numCols];
         this.linkLength = linkLength;
         this.posFunc = posFunc;
+        this.texture = texture;
         for(int i = 0; i < nodes.length; i++){
             for (int j = 0; j < nodes[0].length; j++) {
                 nodes[i][j] = new Node(posFunc.apply(new Vec2(i, j)));
@@ -14,65 +24,29 @@ public class Cloth {
         }
     }
     
-    //public void initial(){
-    //  for (int i = 0; i < numNodes; i++){ 
-    //    for(int j = 0; j < numNodes; j++){
-    //      nodes[i][j].pos.x = base_pos.x+i*1/1;
-    //      nodes[i][j].pos.y = base_pos.y+j*1.1;
-    //      //nodes[i][j].add(new Node(new Vec2(base_pos.x+i*0.2, base_pos+j*0.2)));  //nodes[0] is the base node
-    //    }
-    //  }
-    //}
-    
-    public void update_physics(float dt) {
-        // semi_implicit_integration(dt);
-
-        for (int i = 0; i < num_relaxation_steps; i++) {
-            // constrain_distance();
-            hook_s_law(dt);
-        }
-        
-        
-        // update_velocity(dt);
-
-
-        // pin
-        //for (int col = 0; col < nodes[0].length; col++) {
-        //  //if(nodes[0]
-        //   //nodes[0][col].pos.x = base_pos.y+col*1.1;
-        //    nodes[0][col].pos = posFunc.apply(new Vec2(base_pos.x, col));
-        //    print("Pos: " + nodes[0][col].pos.x + ' ' + nodes[0][col].pos.y);
-        //}
-        
-         // pin
-         //for (int col = 0; col < nodes[0].length; col++) {
-         //    nodes[0][col].pos = posFunc.apply(new Vec2(0, col));
-         //}
-    }
-    
-    public void draw_nodes() {
-        for(int i = 0; i < nodes.length; i++){
-            for (int j = 0; j < nodes[0].length; j++) {
-                ellipse(nodes[i][j].pos.x * scene_scale, nodes[i][j].pos.y * scene_scale, radius*2, radius*2);
+    public void draw() {
+        for (int i = 0; i < rows-1; i++) {
+            for (int j = 0; j < cols-1; j++) {
+                Vec3 p1 = nodes[i][j].pos;
+                Vec3 p2 = nodes[i][j+1].pos;
+                Vec3 p3 = nodes[i+1][j+1].pos;
+                Vec3 p4 = nodes[i+1][j].pos;
+                float ulow = float(i) / (rows-1);
+                float uhigh = float(i+1) / (rows-1);
+                float vlow = float(j) / (cols-1);
+                float vhigh = float(j+1) / (cols-1);
+                pushStyle();
+                textureMode(NORMAL);
+                beginShape();
+                texture(clothTex);
+                vertex(p1.x, p1.y, p1.z, ulow, vlow);
+                vertex(p2.x, p2.y, p2.z, ulow, vhigh);
+                vertex(p3.x, p3.y, p3.z, uhigh, vhigh);
+                vertex(p4.x, p4.y, p4.z, uhigh, vlow);
+                endShape(CLOSE);
+                popStyle();  
             }
         }
-
-    }
-
-    public void draw_lines() {
-        for(int i = 1; i < nodes.length; i++){
-            for (int j = 1; j < nodes[0].length; j++) {
-                line(nodes[i][j].pos.x * scene_scale, nodes[i][j].pos.y * scene_scale, nodes[i-1][j].pos.x * scene_scale, nodes[i-1][j].pos.y * scene_scale);
-                line(nodes[i][j].pos.x * scene_scale, nodes[i][j].pos.y * scene_scale, nodes[i][j-1].pos.x * scene_scale, nodes[i][j-1].pos.y * scene_scale);
-            }
-        }
-        for (int i = 1; i < nodes.length; i++) {
-            line(nodes[i][0].pos.x * scene_scale, nodes[i][0].pos.y * scene_scale, nodes[i-1][0].pos.x * scene_scale, nodes[i-1][0].pos.y * scene_scale);
-        }
-        for (int j = 1; j < nodes[0].length; j++) {
-            line(nodes[0][j].pos.x * scene_scale, nodes[0][j].pos.y * scene_scale, nodes[0][j-1].pos.x * scene_scale, nodes[0][j-1].pos.y * scene_scale);
-        }
-
     }
     
     public void mapTexture(){
@@ -80,167 +54,186 @@ public class Cloth {
       textureMode(NORMAL);
       beginShape();
       texture(clothTex);
-      vertex(nodes[0][0].pos.x, nodes[0][0].pos.y, 0, 0);
-      vertex(nodes[0][4].pos.x, nodes[0][4].pos.y, 0, 1);
-      vertex(nodes[4][4].pos.x, nodes[4][4].pos.y, 1, 1);
-      vertex(nodes[4][0].pos.x, nodes[4][0].pos.y, 1, 0);
+      vertex(nodes[0][nodes.length-1].pos.x, nodes[0][0].pos.y, 0, 0);
+      vertex(nodes[0][nodes.length-1].pos.x, nodes[0][nodes.length-1].pos.y, 0, 1);
+      vertex(nodes[nodes.length-1][nodes.length-1].pos.x, nodes[nodes.length-1][nodes.length-1].pos.y, 1, 1);
+      vertex(nodes[nodes.length-1][0].pos.x, nodes[nodes.length-1][0].pos.y, 1, 0);
       endShape(CLOSE);
       popStyle();  
     }
-    
-    // Cloth Simulation (Hooke's law)
-    private void hook_s_law(float dt) {
-        Vec2 vn[][] = new Vec2[nodes.length][nodes[0].length];
-        // vertical
-         for(int i = 0; i < nodes.length-1; i++){
-             for (int j = 0; j < nodes[0].length; j++) {
-                 Node curr = nodes[i+1][j];
-                 Node prev = nodes[i][j];
-                 //float l = curr.pos.distanceTo(prev.pos);
-                 //Vec2 e = curr.pos.minus(prev.pos).normalized();
-                 //float v1 = dot(e, prev.vel);
-                 //float v2 = dot(e, curr.vel);
-                 //float f = -ks*(linkLength - l)-kv*(v1-v2);
-                 //vn[i][j] = prev.vel.plus(e.times(f*dt));
-                 //vn[i+1][j] = curr.vel.minus(e.times(f*dt));
-                 
-                 //float stringLen = curr.pos.distanceTo(prev.pos);
-                 //float stringForce = -ks * (stringLen - linkLength);
-                 //Vec2 dampF = (curr.vel.minus(prev.vel)).times(-kv);
-                 //Vec2 stringDir = curr.pos.minus(prev.pos).normalized();
-                 //Vec2 stringF= stringDir.times(stringForce); 
-                 //Vec2 acceleration = stringF.plus(dampF);
-                 //vn[i][j] = curr.vel.plus(acceleration.times(dt));
-                 
-                 //float stringLen = curr.pos.x - prev.pos.x;
-                 //float stringForce = -ks * (stringLen - linkLength);
-                 //float dampF = -kv * (curr.vel.x - prev.vel.x);
-                 //float forceX = stringForce + dampF;
-                 //float acceleration = gravity.length() + forceX/nodeMass;
-                 //nodes[i+1][j].vel.x += acceleration*dt;
-                 //nodes[i+1][j].pos.x += nodes[i+1][j].vel.x*dt;
-                 float stringLen = curr.pos.y - prev.pos.y;
-                 float stringForce = -ks * (stringLen - linkLength);
-                 float dampF = -kv * (curr.vel.y - prev.vel.y);
-                 float forceY = stringForce + dampF;
-                 float acceleration = gravity.length() + forceY/nodeMass;
-                 nodes[i+1][j].vel.y += acceleration*dt;
-                 nodes[i+1][j].pos.y += nodes[i+1][j].vel.x*dt;
-             }
-         }
-        // horizontal
-        for(int i = 0; i < nodes.length; i++){
-            for (int j = 0; j < nodes[0].length-1; j++) {
-                Node curr = nodes[i][j+1];
-                Node prev = nodes[i][j];
-                //float l = curr.pos.distanceTo(prev.pos);
-                //Vec2 e = curr.pos.minus(prev.pos).normalized();
-                //float v1 = dot(e, prev.vel);
-                //float v2 = dot(e, curr.vel);
-                //float f = -ks*(linkLength - l)-kv*(v1-v2);
-                //vn[i][j] = prev.vel.plus(e.times(f*dt));
-                //vn[i][j+1] = curr.vel.minus(e.times(f*dt));
-                
-                //float stringLen = curr.pos.y - prev.pos.y;
-                //float stringForce = -ks * (stringLen - linkLength);
-                //float dampF = -kv * (curr.vel.y - prev.vel.y);
-                //float forceY = stringForce + dampF;
-                //float acceleration = gravity.length() + forceY/nodeMass;
-                //nodes[i][j+1].vel.y += acceleration*dt;
-                //nodes[i][j+1].pos.y += nodes[i][j+1].vel.x*dt;
-                
-                float stringLen = curr.pos.x - prev.pos.x;
-                float stringForce = -ks * (stringLen - linkLength);
-                float dampF = -kv * (curr.vel.x - prev.vel.x);
-                float forceX = stringForce + dampF;
-                float acceleration = gravity.length() + forceX/nodeMass;
-                nodes[i][j+1].vel.x += acceleration*dt;
-                nodes[i][j+1].pos.x += nodes[i][j+1].vel.x*dt;
-            }
-        }
-        
-        // update
-        //for(int i = 0; i < nodes.length; i++){
-        //    for (int j = 0; j < nodes[0].length; j++) {
-        //      //print(vn[i][j]);
-        //      //vn[i][j].y += -0.1;
-        //      //nodes[i][j].vel = vn[i][j];
-        //      nodes[i][j].vel = vn[i][j].plus(gravity.times(dt*-0.0001));
-        //      //nodes[i][j].vel = vn[i][j].plus(gravity.times(dt));
-        //      //print(nodes[i][j].vel);
-        //      nodes[i][j].pos.add(nodes[i][j].vel.times(dt));
-        //    }
-        //}
 
-    }
-    
     // Collision Detection
-    private void collision_detection(float dt) {
-        for(int i = 0; i < nodes.length; i++){
+    public void updateCollision(Circle circle) {
+        // self-circle collision
+        Vec3 cpos = circle.pos;
+        float cradius = circle.radius;
+        for (int i = 0; i < nodes.length; i++) {
             for (int j = 0; j < nodes[0].length; j++) {
-                float d = circle0Pos.distanceTo(nodes[i][j].pos);
-                if(d < circles.get(0).r + 0.09){
-                   Vec2 n= (circle0Pos.minus(nodes[i][j].pos)).times(-1); //sphere normal
-                   n.normalized(); 
-                   //n = [n[0],n[1],n[2]]
-                   Vec2 bounce = n.times(dot(nodes[i][j].vel, n));
-                   nodes[i][j].vel = nodes[i][j].vel.minus(bounce.times(-1.5));
-                   nodes[i][j].pos = nodes[i][j].pos.plus(n.times(0.1 + circles.get(0).r - d));
-                   //bounce = np.multiply(np.dot(v[i,j],n),n)
-                   //v[i,j] -= 1.5*bounce
-                   //p[i,j] += np.multiply(.1 + sphereR - d, n) #move out
+                Node node = nodes[i][j];
+                float dist = cpos.distanceTo(node.pos);
+                if (dist <= cradius + 0.005) {
+                    Vec3 norm = (cpos.minus(node.pos).times(-1)).normalized();
+                    Vec3 bounce = norm.times(dot(node.vel, norm));
+                    node.vel.subtract(bounce.times(1 + COR));
+                    node.pos.add(norm.times(COR+cradius-dist));
                 }
             }
         }
     }
-    
-    // Semi implicit integration       
-    private void semi_implicit_integration(float dt) {
-        for(int i = 1; i < nodes.length; i++){
-            for (int j = 0; j < nodes[0].length; j++) {
-                nodes[i][j].last_pos = nodes[i][j].pos;
-                nodes[i][j].vel = nodes[i][j].vel.plus(gravity.times(dt));
+
+    public void updatePhysics(float dt) {
+        // clone vn
+        vn = new Vec3[nodes.length][nodes[0].length];
+        for (int i = 0; i < rows; i++) {
+            for (int j = 0; j < cols; j++) {
+                vn[i][j] = nodes[i][j].vel;
+            }
+        }
+        
+        // hooks law
+        updateHooksLaw(dt);
+        
+        // air drag
+        updateAirdrag(dt);
+
+        // pin top row
+        for (int i = 0; i < cols; i++) {
+            vn[0][i] = new Vec3(0, 0, 0);
+        }
+        
+        // update vn to nodes and semi implicit integration
+        for (int i = 0; i < rows; i++) {
+            for (int j = 0; j < cols; j++) {
+                nodes[i][j].vel = vn[i][j];
+                nodes[i][j].vel.add(gravity.times(dt));
                 nodes[i][j].pos.add(nodes[i][j].vel.times(dt));
             }
         }
     }
     
-    private void constrain_distance() {
-        // Horizontal
-        for (int i = 0; i < nodes.length-1; i++) {
-            for (int j = 0; j < nodes[0].length; j++) {
-                constrain_link(i+1, j, i, j);
+    // Cloth Simulation (Hooke's law)
+    private void updateHooksLaw(float dt) {
+        // horizontal
+        for (int i = 0; i < rows-1; i++) {
+            for (int j = 0; j < cols; j++) {
+                updateLink(i, j, i+1, j, dt, linkLength);
             }
         }
-        // Vertical
-        for (int i = 0; i < nodes.length; i++) {
-            for (int j = 0; j < nodes[0].length-1; j++) {
-                constrain_link(i, j+1, i, j);
+        for (int i = 0; i < rows-2; i++) {
+            for (int j = 0; j < cols; j++) {
+                updateLink(i, j, i+2, j, dt, linkLength);
             }
         }
-        
-    }
-    
-    private void constrain_link(int i1, int j1, int i2, int j2) {
-        Node curr = nodes[i1][j1];
-        Node prev = nodes[i2][j2];
-        Vec2 delta = curr.pos.minus(prev.pos);
-        float delta_len = delta.length();
-        float correction = delta_len - linkLength;
-        correction = correction * ks;
-        Vec2 delta_normalized = delta.normalized();
-        // update the position of both notes
-        nodes[i1][j1].pos.subtract(delta_normalized.times(correction / 2));
-        nodes[i2][j2].pos.add(delta_normalized.times(correction / 2));     
-    }
-    
 
-    private void update_velocity(float dt){
-        for (int i = 0; i < nodes.length; i++) {
-            for (int j = 0; j < nodes[0].length; j++) {
-                nodes[i][j].vel = nodes[i][j].pos.minus(nodes[i][j].last_pos).times(1 / dt);
+        
+        // vertical
+        for (int i = 0; i < rows; i++) {
+            for (int j = 0; j < cols-1; j++) {
+                updateLink(i, j, i, j+1, dt, linkLength);
+            }
+        }
+        for (int i = 0; i < rows; i++) {
+            for (int j = 0; j < cols-2; j++) {
+                updateLink(i, j, i, j+2, dt, linkLength);
+            }
+        }
+
+        // diagonal 1
+        for (int i = 0; i < rows-1; i++) {
+            for (int j = 0; j < cols-1; j++) {
+                float restLength = linkLength * sqrt(2);
+                updateLink(i, j, i+1, j+1, dt, restLength);
             }
         }
         
+        // diagonal 2
+        for (int i = 1; i < rows; i++) {
+            for (int j = 0; j < cols-1; j++) {
+                float restLength = linkLength * sqrt(2);
+                updateLink(i, j, i-1, j+1, dt, restLength);
+            }
+        }
     }
+
+    // Use hooks law to constrain links
+    private void updateLink(int i, int j, int m, int n, float dt, float restL) {
+        Node n1 = nodes[i][j];
+        Node n2 = nodes[m][n];
+        Vec3 e = n2.pos.minus(n1.pos);
+        float l = e.length();
+        e.normalize();
+        float v1 = dot(e, n1.vel);
+        float v2 = dot(e, n2.vel);
+        float f = -ks * (restL-l) - kv * (v1-v2);
+        f = f / restL;
+        Vec3 fe = e.times(f * dt);
+        // print(i);
+        // print(", ");
+        // print(j);
+        // print(", ");
+        // println(fe);
+        vn[i][j].add(fe);
+        vn[m][n].subtract(fe);
+    }
+    
+    // Air drag   
+    private void updateAirdrag(float dt) {
+        for (int i = 0; i < rows-1; i++) {
+            for (int j = 0; j < cols-1; j++) {
+                Vec3 p1 = nodes[i][j].pos;
+                Vec3 v1 = nodes[i+1][j+1].vel;
+                Vec3 p2 = nodes[i+1][j].pos;
+                Vec3 p3 = nodes[i][j+1].pos;
+                Vec3 n = cross(p2.minus(p1), p3.minus(p1));
+                float v = (v1.length() * dot(v1, n)) / (2 * n.length());
+                Vec3 f = n.times(-airdrag * v);
+                vn[i][j].add(f);
+                vn[i+1][j].add(f);
+                vn[i][j+1].add(f);
+            }
+        }
+        for (int i = 0; i < rows-1; i++) {
+            for (int j = 0; j < cols-1; j++) {
+                Vec3 p1 = nodes[i+1][j+1].pos;
+                Vec3 v1 = nodes[i+1][j+1].vel;
+                Vec3 p2 = nodes[i+1][j].pos;
+                Vec3 p3 = nodes[i][j+1].pos;
+                Vec3 n = cross(p2.minus(p1), p3.minus(p1));
+                float v = (v1.length() * dot(v1, n)) / (2 * n.length());
+                Vec3 f = n.times(-airdrag * v);
+                vn[i+1][j+1].add(f);
+                vn[i+1][j].add(f);
+                vn[i][j+1].add(f);
+            }
+        }
+
+        Vec3 wind = new Vec3(0, 0, airdrag / 25 * dt);
+        for (int i = 1; i < rows; i++) {
+            for (int j = 0; j < cols; j++) {
+                nodes[i][j].vel.add(wind);
+            }
+        }
+
+    }
+
+    private void printNodes() {
+        for (Node[] row : nodes) {
+            for (Node node : row) {
+                print(node.pos);
+                print(", ");
+            }
+            println("");
+        }
+    }
+    
+    private void printVels() {
+        for (Vec3[] row : vn) {
+            for (Vec3 v : row) {
+                print(v);
+                print(", ");
+            }
+            println("");
+        }
+    }
+
 }
