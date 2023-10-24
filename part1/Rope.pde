@@ -1,3 +1,6 @@
+// CSCI5611-Procjet2
+// Author: Jianing Wen, Jacob Sun
+
 import java.util.function.Function;
 
 public class Rope {

@@ -1,10 +1,5 @@
-// Created for CSCI 5611 by Liam Tyler & Stephen J. Guy
-
-// WASD keys move the camera relative to its current orientation
-// Arrow keys rotate the camera's orientation
-// Holding shift boosts the move speed
-// Mouse position is used to highlight the sphere that the ray from the camera intersects with
-
+// CSCI5611-Procjet2
+// Author: Stephen Guy, Jianing Wen, Jacob Sun
 
 class Camera
 {
@@ -55,27 +50,6 @@ class Camera
     camera( position.x, position.y, position.z,
             position.x + forwardDir.x, position.y + forwardDir.y, position.z + forwardDir.z,
             upDir.x, upDir.y, upDir.z );
-
-    //float mx = mouseX / (float) width;
-    //float my = mouseY / (float) height;
-    //PVector mousePos = new PVector();
-    //mousePos.set( forwardDir );
-    //mousePos.mult( nearPlane );
-    //mousePos.add( position );
-    //mousePos.add( PVector.mult( upDir, ( my - 0.5 ) * nearPlane * tan( fovy / 2 ) * 2 ) );
-    //mousePos.add( PVector.mult( rightDir, ( mx - 0.5 ) * nearPlane * aspectRatio * tan( fovy / 2 ) * 2 ) );
-    //mouseDir = new PVector();
-    //mouseDir.set( mousePos );
-    //mouseDir.sub( position );
-    //mouseDir.normalize();
-    
-    //// Draw box at mouse position
-    //pushMatrix();
-    //translate( mousePos.x, mousePos.y, mousePos.z );
-    //fill(120,120,120);
-    //box( 0.002 );
-    //popMatrix();
-
   }
   
   // only need to change if you want difrent keys for the controls
@@ -150,111 +124,3 @@ class Camera
   PVector positiveTurn;
   boolean shiftPressed;
 };
-
-
-
-
-//// ----------- Example using Camera class -------------------- //
-//Camera camera;
-
-//void setup(){
-//  size(600, 600, P3D);
-//  camera = new Camera();
-//  sphereDetail(15, 15);
-//  surface.setTitle("[CSCI 5611] Picking Example");
-//  // noCursor();  // Disable mouse cursor
-//}
-
-//void keyPressed()
-//{
-//  camera.HandleKeyPressed();
-//}
-
-//void keyReleased()
-//{
-//  camera.HandleKeyReleased();
-//}
-
-//boolean raySphereIntersect(PVector rayOrigin, PVector rayDir, PVector sphereCenter, float sphereRadius, PVector intersection){
-//  PVector oc = new PVector();
-//  oc.set(rayOrigin);
-//  oc.sub(sphereCenter);
-//  float a = PVector.dot(rayDir, rayDir);
-//  float b = 2 * PVector.dot(oc, rayDir);
-//  float c = PVector.dot(oc, oc) - sphereRadius * sphereRadius;
-//  float discriminant = b * b - 4 * a * c;
-//  if (discriminant < 0){
-//    return false;
-//  }
-//  else{
-//    float t = (-b - sqrt(discriminant)) / (2 * a);
-//    intersection.set(rayOrigin);
-//    intersection.add(PVector.mult(rayDir, t));
-//    return true;
-//  }
-//}
-
-//void drawSphere(PVector center, float radius){
-//  pushMatrix();
-//  translate(center.x, center.y, center.z);
-//  sphere(radius);
-//  popMatrix();
-//}
-
-//void draw() {
-//  background(255);
-//  noLights();
-
-//  float sphereRadius = 20;
-
-//  camera.Update(1.0/frameRate);
-//  PVector intersection = new PVector();
-
-//  // draw six spheres surrounding the origin (front, back, left, right, top, bottom)
-
-
-//  // Blue Spheres
-//  PVector sphereCenter = new PVector(0, 0, -50);
-//  fill( 0, 0, 255 );
-//  if (raySphereIntersect(camera.position, camera.mouseDir, sphereCenter, sphereRadius, intersection)){
-//    fill(255, 0, 255);
-//  }
-//  drawSphere(sphereCenter, sphereRadius);
-
-//  sphereCenter = new PVector(0, 0, 50);
-//  fill( 0, 0, 255 );
-//  if (raySphereIntersect(camera.position, camera.mouseDir, sphereCenter, sphereRadius, intersection)){
-//    fill(255, 0, 255);
-//  }
-//  drawSphere(sphereCenter, sphereRadius);
-
-//  // Red Spheres
-//  sphereCenter = new PVector(-50, 0, 0);
-//  fill( 255, 0, 0 );
-//  if (raySphereIntersect(camera.position, camera.mouseDir, sphereCenter, sphereRadius, intersection)){
-//    fill(255, 0, 255);
-//  }
-//  drawSphere(sphereCenter, sphereRadius);
-
-//  sphereCenter = new PVector(50, 0, 0);
-//  fill( 255, 0, 0 );
-//  if (raySphereIntersect(camera.position, camera.mouseDir, sphereCenter, sphereRadius, intersection)){
-//    fill(255, 0, 255);
-//  }
-//  drawSphere(sphereCenter, sphereRadius);
-  
-//  // Green Spheres
-//  sphereCenter = new PVector(0, 50, 0);
-//  fill( 0, 255, 0 );
-//  if (raySphereIntersect(camera.position, camera.mouseDir, sphereCenter, sphereRadius, intersection)){
-//    fill(255, 0, 255);
-//  }
-//  drawSphere(sphereCenter, sphereRadius);
-
-//  sphereCenter = new PVector(0, -50, 0);
-//  fill( 0, 255, 0 );
-//  if (raySphereIntersect(camera.position, camera.mouseDir, sphereCenter, sphereRadius, intersection)){
-//    fill(255, 0, 255);
-//  }
-//  drawSphere(sphereCenter, sphereRadius);
-//}

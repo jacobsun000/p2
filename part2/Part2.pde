@@ -1,3 +1,6 @@
+//CSCI 5611 project2-p2
+//Author: Stephen Guy, Jianing Wen
+    
 //Set inital conditions
 float w = 40;
 float h = 40;
